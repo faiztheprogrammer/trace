@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const pool = require('../db.js');
+
 
 const bugs = [
     {
@@ -33,6 +35,20 @@ router.get("/", (req, res) => {
 
     const filteredBugs = bugs.filter((bug) => bug.status === status);
     res.status(200).json(filteredBugs);
+});
+
+router.get("/db-preview", async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM bugs");
+        res.status(200).json(result.rows);
+        return;
+    } catch(error) {
+        console.error(error.message);
+
+        return res.status(500).json({
+            message: "Database query failed"
+        })
+    }
 });
 
 router.get("/:id", (req, res) => {
