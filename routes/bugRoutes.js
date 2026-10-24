@@ -49,25 +49,37 @@ router.get("/", async (req, res) => {
     }
 });
 
-router.get("/:id", (req, res) => {
-    const id = Number(req.params.id);
-    const bug = bugs.find((bug) => bug.id === id)
+router.get("/:id", async (req, res) => {
+    try {
+        const id = Number(req.params.id);
 
-    if (bug) {
-        res.json(bug);
-        return;
+        if(!Number.isInteger(id) || id <= 0) {
+            res.status(400).json({ message: "Invalid input" })
+            return;
+        }
+
+        const result = await pool.query(
+            "SELECT * FROM bugs WHERE id = $1",
+            [id]
+        );
+
+        if(result.rowCount < 1) {
+            res.status(404).json({ message: `No record matching id: ${id}` });
+            return;
+        }
+
+        return res.json(result.rows[0]);
+    } catch(error) {
+        console.error(error.message);
+        return res.status(500).json({ message: "Database query failed" });
     }
-
-    res.status(404).json({
-        message: "Bug not found!"
-    });
 });
 
 router.post("/", async (req, res) => {
     try {
         const newBug = req.body || {};
 
-        if(typeof newBug.title !== 'string' || newBug.title.trim() === "" || !allowedStatuses.includes(newBug.status)) {
+        if (typeof newBug.title !== 'string' || newBug.title.trim() === "" || !allowedStatuses.includes(newBug.status)) {
             res.status(400).json({ message: "Invalid input" });
             return;
         }
@@ -76,7 +88,7 @@ router.post("/", async (req, res) => {
             "INSERT INTO bugs (title, status) VALUES ($1, $2) RETURNING *",
             [newBug.title, newBug.status]
         );
-        
+
         res.status(201).json(result.rows[0]);
         return;
     } catch (error) {
