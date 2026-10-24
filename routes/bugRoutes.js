@@ -2,22 +2,6 @@ const express = require("express");
 const router = express.Router();
 const pool = require('../db.js');
 
-const bugs = [
-    {
-        id: 1,
-        title: "Download certificate button not working",
-        status: "Open"
-    }, {
-        id: 2,
-        title: "API response return 500 internal server error",
-        status: "In Progress"
-    }, {
-        id: 3,
-        title: "Dashboard failing to load within 10 seconds",
-        status: "Open"
-    }
-];
-
 const allowedStatuses = ["Open", "In Progress", "Closed"];
 
 router.get("/", async (req, res) => {
@@ -117,23 +101,34 @@ router.patch("/:id", async (req, res) => {
             return res.status(404).json({ message: "No record was found" })
         }
         return res.status(200).json(result.rows[0]);
-    } catch(error) {
+    } catch (error) {
         console.error(error.message);
         return res.status(500).json({ message: "Database query failed" });
     }
 });
 
-router.delete("/:id", (req, res) => {
-    const id = Number(req.params.id);
-    const bugIndexToDelete = bugs.findIndex((bug) => bug.id === id);
+router.delete("/:id", async (req, res) => {
+    try {
+            const id = Number(req.params.id);
 
-    if (bugIndexToDelete === -1) {
-        res.status(404).json({ message: "Bug doesn't exist" });
-        return;
+    if (!Number.isInteger(id) || id < 1) {
+        return res.status(400).json({ message: "Invalid id" });
     }
 
-    bugs.splice(bugIndexToDelete, 1);
-    return res.status(204).send();
+    const result = await pool.query(
+        "DELETE from bugs WHERE id = $1",
+        [id]
+    );
+
+    if(result.rowCount > 0) {
+        return res.status(204).send();
+    }
+
+    return res.status(404).json({ message: "Record not found" });
+    } catch(error) {
+        console.error(error.message);
+        return res.status(500).json({ message: "Database query failed" });
+    }
 });
 
 module.exports = router;
