@@ -53,7 +53,7 @@ router.get("/:id", async (req, res) => {
     try {
         const id = Number(req.params.id);
 
-        if(!Number.isInteger(id) || id <= 0) {
+        if (!Number.isInteger(id) || id <= 0) {
             res.status(400).json({ message: "Invalid input" })
             return;
         }
@@ -63,13 +63,13 @@ router.get("/:id", async (req, res) => {
             [id]
         );
 
-        if(result.rowCount < 1) {
+        if (result.rowCount < 1) {
             res.status(404).json({ message: `No record matching id: ${id}` });
             return;
         }
 
         return res.json(result.rows[0]);
-    } catch(error) {
+    } catch (error) {
         console.error(error.message);
         return res.status(500).json({ message: "Database query failed" });
     }
@@ -97,30 +97,30 @@ router.post("/", async (req, res) => {
     }
 });
 
-router.patch("/:id", (req, res) => {
-    const id = Number(req.params.id);
-    const existingBug = bugs.find((bug) => bug.id === id);
-    const incomingBug = req.body;
+router.patch("/:id", async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        const incomingBug = req.body || {};
+        const status = incomingBug.status;
 
-    if (!existingBug) {
-        return res.status(404).json({
-            message: "The bug you want to modify doesn't exist"
-        });
+        if (!Number.isInteger(id) || id <= 0 || !allowedStatuses.includes(status)) {
+            res.status(400).json({ message: `Invalid id: "${id}" or status: "${status}"` });
+            return;
+        }
+
+        const result = await pool.query(
+            "UPDATE bugs SET status = $1 WHERE id = $2 RETURNING *",
+            [status, id]
+        );
+
+        if (result.rowCount < 1) {
+            return res.status(404).json({ message: "No record was found" })
+        }
+        return res.status(200).json(result.rows[0]);
+    } catch(error) {
+        console.error(error.message);
+        return res.status(500).json({ message: "Database query failed" });
     }
-
-    if (!incomingBug) {
-        return res.status(400).json({ message: "400 Bad Request" });
-    }
-
-    if (!allowedStatuses.includes(incomingBug.status)) {
-        res.status(400).json({
-            message: "Invalid or missing data"
-        });
-        return;
-    }
-
-    existingBug.status = incomingBug.status;
-    res.status(200).json(existingBug);
 });
 
 router.delete("/:id", (req, res) => {
