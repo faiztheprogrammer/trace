@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const pool = require('../db.js');
 
-
 const bugs = [
     {
         id: 1,
@@ -21,33 +20,32 @@ const bugs = [
 
 const allowedStatuses = ["Open", "In Progress", "Closed"];
 
-router.get("/", (req, res) => {
-    const status = req.query.status;
-    if(!status) {
-        res.json(bugs);
-        return;
-    }
-
-    if(!allowedStatuses.includes(status)) {
-        res.status(400).json({ message: "Invalid bug status" });
-        return;
-    }
-
-    const filteredBugs = bugs.filter((bug) => bug.status === status);
-    res.status(200).json(filteredBugs);
-});
-
-router.get("/db-preview", async (req, res) => {
+router.get("/", async (req, res) => {
     try {
-        const result = await pool.query("SELECT * FROM bugs");
-        res.status(200).json(result.rows);
-        return;
-    } catch(error) {
+        const status = req.query.status;
+
+        if (!status) {
+            const allBugs = await pool.query("SELECT * FROM bugs");
+            return res.json(allBugs.rows);
+        }
+
+        if (!allowedStatuses.includes(status)) {
+            res.status(400).json({ message: "Invalid request" });
+            return;
+        }
+
+        const bugsFilteredByStatus = await pool.query(
+            'SELECT * FROM bugs WHERE status = $1',
+            [status]
+        );
+
+        return res.json(bugsFilteredByStatus.rows);
+    } catch (error) {
         console.error(error.message);
 
         return res.status(500).json({
             message: "Database query failed"
-        })
+        });
     }
 });
 
@@ -65,27 +63,26 @@ router.get("/:id", (req, res) => {
     });
 });
 
-let nextId = 4;
+router.post("/", async (req, res) => {
+    try {
+        const newBug = req.body || {};
 
-router.post("/", (req, res) => {
-    const newBug = req.body;
+        if(typeof newBug.title !== 'string' || newBug.title.trim() === "" || !allowedStatuses.includes(newBug.status)) {
+            res.status(400).json({ message: "Invalid input" });
+            return;
+        }
 
-    if (!newBug.title || typeof newBug.title != "string" || newBug.title.trim() === "") {
-        res.status(400).json({ message: "Bug title is required" });
+        const result = await pool.query(
+            "INSERT INTO bugs (title, status) VALUES ($1, $2) RETURNING *",
+            [newBug.title, newBug.status]
+        );
+        
+        res.status(201).json(result.rows[0]);
         return;
+    } catch (error) {
+        console.log(error.message);
+        return res.status(500).json({ message: "Database query failed for the post request" })
     }
-
-    if (!allowedStatuses.includes(newBug.status)) {
-        res.status(400).json({ message: "Invalid bug status" });
-        return;
-    }
-
-    newBug.id = nextId;
-    nextId++;
-
-    bugs.push(newBug);
-
-    res.status(201).json(newBug);
 });
 
 router.patch("/:id", (req, res) => {
