@@ -1,4 +1,5 @@
 const pool = require('../db.js');
+const { findBugById } = require('../repositories/bugRepository.js');
 
 const allowedStatuses = ["Open", "In Progress", "Closed"];
 
@@ -7,21 +8,18 @@ async function getBugById(req, res) {
         const id = Number(req.params.id);
 
         if (!Number.isInteger(id) || id <= 0) {
-            res.status(400).json({ message: "Invalid input" })
+            res.status(400).json({ message: "Invalid input" });
             return;
         }
 
-        const result = await pool.query(
-            "SELECT * FROM bugs WHERE id = $1",
-            [id]
-        );
+        const bug = await findBugById(id);
 
-        if (result.rowCount < 1) {
-            res.status(404).json({ message: `No record matching id: ${id}` });
-            return;
+        if(!bug) {
+            return res.status(404).json({ message: "Bug not found" });
         }
 
-        return res.json(result.rows[0]);
+        return res.json(bug);
+        
     } catch (error) {
         console.error(error.message);
         return res.status(500).json({ message: "Database query failed" });
