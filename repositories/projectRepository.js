@@ -25,4 +25,13 @@ async function addNewProjectRepo(name) {
     return newProject.rows[0];
 }
 
-module.exports = { findProjectById, findAllProjects, addNewProjectRepo }
+async function updateProjectNameRepo(id, name) {
+    const updatedProjectName = await pool.query(
+        "UPDATE projects SET name = $1 WHERE id = $2 RETURNING *",
+        [name, id]
+    );
+
+    return updatedProjectName.rows[0];
+}
+
+module.exports = { findProjectById, findAllProjects, addNewProjectRepo, updateProjectNameRepo }
