@@ -1,4 +1,4 @@
-const { findProjectById, findAllProjects, updateProjectNameRepo } = require('../repositories/projectRepository.js')
+const { findProjectById, findAllProjects, addNewProjectRepo, updateProjectNameRepo, deleteProjectRepo } = require('../repositories/projectRepository.js')
 async function getProjectById(req, res) {
     try {
         const id = Number(req.params.id);
@@ -70,4 +70,24 @@ async function updateProjectName(req, res) {
     }
 }
 
-module.exports = { getProjectById, getAllProjects, addNewProject, updateProjectName }
+async function deleteProject(req, res) {
+    try {
+        const id = Number(req.params.id);
+        
+        if(!Number.isInteger(id) || id <= 0) {
+            return res.status(400).json({ message: "Invalid id" });
+        }
+
+        const result = await deleteProjectRepo(id);
+        if(!result) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+
+        return res.status(204).send();
+    } catch(error) {
+        console.error(error.message);
+        return res.status(500).json({ message: "Database query failed" });
+    }
+}
+
+module.exports = { getProjectById, getAllProjects, addNewProject, updateProjectName, deleteProject }

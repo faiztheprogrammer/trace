@@ -34,4 +34,13 @@ async function updateProjectNameRepo(id, name) {
     return updatedProjectName.rows[0];
 }
 
-module.exports = { findProjectById, findAllProjects, addNewProjectRepo, updateProjectNameRepo }
+async function deleteProjectRepo(id) {
+    const result = await pool.query(
+        "DELETE FROM projects WHERE id = $1",
+        [id]
+    );
+
+    return result.rowCount > 0;
+}
+
+module.exports = { findProjectById, findAllProjects, addNewProjectRepo, updateProjectNameRepo, deleteProjectRepo }
