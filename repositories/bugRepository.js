@@ -22,10 +22,10 @@ async function findAllBugs(status) {
     return bugsFilteredByStatus.rows;
 }
 
-async function createBugRepo(title, status) {
+async function createBugRepo(title, status, projectId) {
     const result = await pool.query(
-        "INSERT INTO bugs (title, status) VALUES ($1, $2) RETURNING *",
-        [title, status]
+        "INSERT INTO bugs (title, status, project_id) VALUES ($1, $2, $3) RETURNING *",
+        [title, status, projectId]
     );
     return result.rows[0];
 }

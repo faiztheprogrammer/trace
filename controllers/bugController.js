@@ -69,12 +69,12 @@ async function createBug(req, res) {
     try {
         const newBug = req.body || {};
 
-        if (typeof newBug.title !== 'string' || newBug.title.trim() === "" || !allowedStatuses.includes(newBug.status)) {
+        if (typeof newBug.title !== 'string' || newBug.title.trim() === "" || !allowedStatuses.includes(newBug.status) || !Number.isInteger(newBug.projectId) || newBug.projectId <= 0) {
             res.status(400).json({ message: "Invalid input" });
             return;
         }
 
-        const createdBug = await createBugRepo(newBug.title, newBug.status)
+        const createdBug = await createBugRepo(newBug.title, newBug.status, newBug.projectId);
         return res.status(201).json(createdBug);
     } catch (error) {
         console.log(error.message);
