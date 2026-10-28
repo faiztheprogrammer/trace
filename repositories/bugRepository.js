@@ -2,7 +2,16 @@ const pool = require('../db.js');
 
 async function findBugById(id) {
     const result = await pool.query(
-        "SELECT * FROM bugs WHERE id = $1",
+        `SELECT
+            bugs.id,
+            bugs.title,
+            bugs.status,
+            bugs.project_id,
+            projects.name AS project_name
+        FROM bugs
+        LEFT JOIN projects
+            ON bugs.project_id = projects.id
+            WHERE bugs.id = $1`,
         [id]
     );
 
@@ -11,12 +20,31 @@ async function findBugById(id) {
 
 async function findAllBugs(status) {
     if (!status) {
-        const allBugs = await pool.query("SELECT * FROM bugs");
+        const allBugs = await pool.query(
+            `SELECT
+                bugs.id,
+                bugs.title, 
+                bugs.status,
+                bugs.project_id, 
+                projects.name AS project_name 
+            FROM bugs
+            LEFT JOIN projects
+                ON bugs.project_id = projects.id;`
+        );
         return allBugs.rows;
     }
 
     const bugsFilteredByStatus = await pool.query(
-        'SELECT * FROM bugs WHERE status = $1',
+        `Select
+            bugs.id,
+            bugs.title,
+            bugs.status,
+            bugs.project_id,
+            projects.name AS project_name
+        FROM bugs
+        LEFT JOIN projects
+            ON bugs.project_id = projects.id
+            WHERE bugs.status = $1`,
         [status]
     );
     return bugsFilteredByStatus.rows;
