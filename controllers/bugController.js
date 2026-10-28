@@ -1,3 +1,4 @@
+const { raw } = require('express');
 const { findBugById, findAllBugs, createBugRepo, updateBugRepo, deleteBugRepo } = require('../repositories/bugRepository.js');
 const allowedStatuses = ["Open", "In Progress", "Closed"];
 
@@ -50,11 +51,22 @@ async function getAllBugs(req, res) {
         const status = req.query.status;
 
         if (status && !allowedStatuses.includes(status)) {
-            res.status(400).json({ message: "Invalid request" });
+            res.status(400).json({ message: "Invalid status" });
             return;
         }
 
-        const allBugs = await findAllBugs(status);
+        const rawProjectId = req.query.projectId;
+        let projectId;
+
+        if (rawProjectId !== undefined) {
+            projectId = Number(rawProjectId);
+
+            if (!Number.isInteger(projectId) || projectId <= 0) {
+                return res.status(400).json({ message: "Invalid project id" });
+            }
+        }
+
+        const allBugs = await findAllBugs(status, projectId);
         return res.json(allBugs);
     } catch (error) {
         console.error(error.message);
@@ -77,7 +89,7 @@ async function createBug(req, res) {
         const createdBug = await createBugRepo(newBug.title, newBug.status, newBug.projectId);
         return res.status(201).json(createdBug);
     } catch (error) {
-        if(error.code === "23503" && error.constraint === "bugs_project_id_fkey") {
+        if (error.code === "23503" && error.constraint === "bugs_project_id_fkey") {
             return res.status(400).json({ message: "Project does not exist" });
         }
         console.log(error.message);
