@@ -90,7 +90,7 @@ async function createBug(req, res) {
         return res.status(201).json(createdBug);
     } catch (error) {
         if (error.code === "23503" && error.constraint === "bugs_project_id_fkey") {
-            return res.status(400).json({ message: "Project does not exist" });
+            return res.status(400).json({ message: "Project your are trying to refer the bug to does not exist" });
         }
         console.log(error.message);
         return res.status(500).json({ message: "Database query failed for the post request" })
