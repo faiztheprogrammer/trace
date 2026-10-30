@@ -10,4 +10,17 @@ async function createUserRepo(email, passwordHash) {
     return result.rows[0];
 }
 
-module.exports = { createUserRepo };
+async function findUserByEmail(email) {
+    const result = await pool.query(
+        'SELECT id, email, password_hash FROM users WHERE email = $1',
+        [email]
+    );
+
+    if(result.rowCount < 1) {
+        return undefined;
+    }
+
+    return result.rows[0]
+}
+
+module.exports = { createUserRepo, findUserByEmail };
