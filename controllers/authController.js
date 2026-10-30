@@ -11,7 +11,17 @@ async function registerUser(req, res) {
             return res.status(400).json({ message: "Invalid email or password" });
         }
 
+        if (password.length < 8) {
+            return res.status(400).json({ message: "Password must be at least 8 characters" });
+        }
+
         const normalizedEmail = email.trim().toLowerCase();
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailPattern.test(normalizedEmail)) {
+            return res.status(400).json({ message: "Invalid email format" });
+        }
+
         const hashedPassword = await hashPassword(password);
         const createUser = await createUserRepo(normalizedEmail, hashedPassword);
         return res.status(201).json(createUser);
@@ -19,7 +29,7 @@ async function registerUser(req, res) {
         if(error.code === "23505") {
             return res.status(409).json({ message: "Email already registered" });
         }
-        
+
         console.error(error.message);
         return res.status(500).json({ message: "Database query failed" });
     }
