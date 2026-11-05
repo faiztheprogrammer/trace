@@ -9,4 +9,14 @@ function generateToken(Id) {
     return token;
 }
 
-module.exports = { generateToken }
+function verifyToken(token) {
+    const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        { algorithms: ["HS256"]}
+    );
+
+    return decoded;
+}
+
+module.exports = { generateToken, verifyToken }

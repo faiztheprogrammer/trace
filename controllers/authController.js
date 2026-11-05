@@ -1,5 +1,6 @@
 const { hashPassword, verifyPassword } = require('../utils/password.js');
 const { createUserRepo, findUserByEmail } = require('../repositories/userRepository.js');
+const { generateToken } = require('../utils/token.js');
 
 async function registerUser(req, res) {
     try {
@@ -59,9 +60,12 @@ async function loginUser(req, res) {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
+        const token = generateToken(userFound.id);
+
         return res.status(200).json({
             id: userFound.id,
-            email: userFound.email
+            email: userFound.email,
+            token: token
         });
     } catch (error) {
         console.error(error.message);
