@@ -4,10 +4,10 @@ const { getAllBugs, getBugById, createBug, updateBug, deleteBug } = require('../
 const { requireAuth } = require("../middleware/requireAuth.js");
 const { requireAdmin } = require("../middleware/requireAdmin.js");
 
-router.get("/", getAllBugs);
-router.get("/:id", getBugById);
-router.post("/", createBug);
-router.patch("/:id", updateBug) 
+router.get("/", requireAuth, getAllBugs);
+router.get("/:id", requireAuth, getBugById);
+router.post("/", requireAuth, createBug);
+router.patch("/:id", requireAuth, updateBug) 
 router.delete("/:id", requireAuth, requireAdmin, deleteBug);
 
 module.exports = router;
