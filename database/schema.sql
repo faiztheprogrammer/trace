@@ -15,3 +15,7 @@ CREATE TABLE users (
 	email TEXT UNIQUE NOT NULL,
 	password_hash TEXT NOT NULL
 );
+
+ALTER TABLE users 
+ADD COLUMN role TEXT NOT NULL 
+CHECK (role IN ('member', 'admin')) DEFAULT 'member'
