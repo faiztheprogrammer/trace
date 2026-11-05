@@ -16,11 +16,16 @@ async function findUserByEmail(email) {
         [email]
     );
 
-    if(result.rowCount < 1) {
-        return undefined;
-    }
-
     return result.rows[0]
 }
 
-module.exports = { createUserRepo, findUserByEmail };
+async function findUserById(id) {
+    const result = await pool.query(
+        'SELECT id, email, role FROM users where id = $1',
+        [id]
+    );
+
+    return result.rows[0];
+}
+
+module.exports = { createUserRepo, findUserByEmail, findUserById };
