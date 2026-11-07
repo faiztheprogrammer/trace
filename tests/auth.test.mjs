@@ -129,3 +129,66 @@ test("Cannot log in with an incorrect password", async () => {
         );
     }
 });
+
+test("Role changes immediately affect authorization", async () => {
+    const email = `test-${randomUUID()}@gmail.com`;
+    const password = 'TracePassword';
+
+    try {
+        const registerResponse = await request(app)
+            .post("/api/auth/register")
+            .send({
+                email: email,
+                password: password
+            });
+
+        expect(registerResponse.status).toBe(201);
+        expect(registerResponse.body.email).toBe(email);
+
+        // Promote the member to 'admin'
+        await pool.query(
+            'UPDATE users SET role = $1 WHERE email = $2',
+            ["admin", email]
+        );
+
+        const loginResponse = await request(app)
+            .post("/api/auth/login")
+            .send({
+                email: email,
+                password: password
+            });
+
+        expect(loginResponse.status).toBe(200);
+        expect(loginResponse.body).toHaveProperty("token");
+
+        const token = loginResponse.body.token;
+
+        // Try deleting a non-existent bug
+        const responseOne = await request(app)
+            .delete("/api/bugs/99999")
+            .set("Authorization", `Bearer ${token}`);
+
+        expect(responseOne.status).toBe(404);
+
+        // Demote the user to member again
+        await pool.query(
+            'UPDATE users SET role = $1 WHERE email = $2',
+            ["member", email]
+        );
+
+        const responseTwo = await request(app)
+            .delete("/api/bugs/99999")
+            .set("Authorization", `Bearer ${token}`);
+
+        expect(responseTwo.status).toBe(403);
+        expect(responseTwo.body).toEqual({
+            message: "Admin access required"
+        });
+
+    } finally {
+        await pool.query(
+            'DELETE FROM users WHERE email = $1',
+            [email]
+        );
+    }
+});
