@@ -3,6 +3,7 @@ import request from "supertest";
 import app from "../app.js";
 import pool from "../db.js";
 import { randomUUID } from "node:crypto";
+import { cleanupTestData } from "./testHelpers.mjs";
 
 test("DELETE /api/bugs/:id rejects unauthenticated requests", async () => {
     const response = await request(app).delete("/api/bugs/9999");
@@ -191,4 +192,38 @@ test("Role changes immediately affect authorization", async () => {
             [email]
         );
     }
+});
+
+test("registration rejects a duplicate email with 409", async () => {
+    const email = `trace-${randomUUID()}@example.com`;
+    const body = { email, password: "StrongPassword123!" };
+    try {
+        const first = await request(app).post("/api/auth/register").send(body);
+        expect(first.status).toBe(201);
+
+        const second = await request(app).post("/api/auth/register").send(body);
+        expect(second.status).toBe(409);
+        expect(second.body).toEqual({ message: "Email already registered" });
+    } finally {
+        await cleanupTestData({ email });
+    }
+});
+
+test("unknown email returns 401 without a token", async () => {
+    const response = await request(app)
+        .post("/api/auth/login")
+        .send({
+            email: `nobody-${randomUUID()}@example.com`,
+            password: "StrongPassword123!"
+        });
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ message: "Invalid credentials" });
+    expect(response.body).not.toHaveProperty("token");
+});
+
+test("reading bugs without a JWT returns 401", async () => {
+    const response = await request(app).get("/api/bugs");
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ message: "Authentication required" });
 });
