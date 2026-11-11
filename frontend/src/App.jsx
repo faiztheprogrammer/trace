@@ -4,25 +4,23 @@ function App() {
   const appName = "Trace";
   const totalProjects = 3;
 
-  const [totalBugs, setTotalBugs] = useState(15);
+  const bugs = [
+    { id: 1, title: "Login button not working", status: "Open" },
+    { id: 2, title: "Dashboard loading slowly", status: "In Progress" },
+    { id: 3, title: "Payment request failing", status: "Closed" }
+  ];
+
   return (
     <>
       <h1>{appName}</h1>
       <p>A project and bug tracking application.</p>
       <p>Total projects: <strong>{totalProjects}</strong></p>
-      <p>{totalBugs === 0 ?
-        "No bugs reported"
-        : `Total bugs: ${totalBugs}`}
-      </p>
 
-      <button onClick={() => setTotalBugs(totalBugs + 1)}>
-        Add bug
-      </button><br />
-      <button onClick={() => {
-        if (totalBugs > 0) {
-          setTotalBugs(totalBugs - 1)
-        }
-      }}>Remove bugs</button>
+      <ul>
+        {bugs.map((bug) => (
+          <li key={bug.id}>Title: {bug.title} ----- Status: {bug.status}</li>
+        ))}
+      </ul>
     </>
   )
 }
