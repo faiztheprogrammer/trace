@@ -10,10 +10,19 @@ function App() {
     { id: 3, title: "Payment request failing", status: "Closed" }
   ]);
 
+  const [backendStatus, setBackendStatus] = useState("Not checked");
+
+  async function checkBackend() {
+    const response = await fetch("/api/health");
+    const data = await response.json();
+
+    setBackendStatus(data.status);
+  }
+
   function addBug() {
     const newBug = {
       id: bugs.length + 1,
-      title: "New bug",
+      title: "API response failing",
       status: "Open"
     }
 
@@ -26,13 +35,17 @@ function App() {
       <p>A project and bug tracking application.</p>
       <p>Total projects: <strong>{totalProjects}</strong></p>
 
+      <p>Total bugs: <strong>{bugs.length}</strong></p>
       <ul>
         {bugs.map((bug) => (
           <li key={bug.id}>Title: {bug.title} ----- Status: {bug.status}</li>
         ))}
       </ul>
 
-      <button onClick={addBug}>Add bug</button>
+      <p>Backend status: {backendStatus}</p>
+
+      <button onClick={addBug}>Add bug</button><br />
+      <button onClick={checkBackend}>Check backend status</button>
     </>
   )
 }
