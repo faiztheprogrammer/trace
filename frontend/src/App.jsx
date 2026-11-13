@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function App() {
   const appName = "Trace";
@@ -29,6 +29,10 @@ function App() {
     setBugs([...bugs, newBug]);
   }
 
+  useEffect(() => {
+    checkBackend();
+  }, [])
+
   return (
     <>
       <h1>{appName}</h1>
@@ -43,9 +47,7 @@ function App() {
       </ul>
 
       <p>Backend status: {backendStatus}</p>
-
       <button onClick={addBug}>Add bug</button><br />
-      <button onClick={checkBackend}>Check backend status</button>
     </>
   )
 }
