@@ -11,12 +11,25 @@ function App() {
   ]);
 
   const [backendStatus, setBackendStatus] = useState("Not checked");
+  const [isLoading, setIsLoading] = useState(false);
 
   async function checkBackend() {
-    const response = await fetch("/api/health");
-    const data = await response.json();
+    setIsLoading(true);
 
-    setBackendStatus(data.status);
+    try {
+      const response = await fetch("/api/health");
+      const data = await response.json();
+      if(!response.ok) {
+        throw new Error(data.error);
+      }
+      
+      setBackendStatus(data.status);
+    } catch(error) {
+      console.error(error.message);
+      setBackendStatus("Backend unavailable");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   function addBug() {
@@ -46,7 +59,7 @@ function App() {
         ))}
       </ul>
 
-      <p>Backend status: {backendStatus}</p>
+      <p>Backend Status: {isLoading ? "Checking..." : backendStatus}</p>
       <button onClick={addBug}>Add bug</button><br />
     </>
   )
