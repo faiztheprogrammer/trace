@@ -4,15 +4,30 @@ function App() {
   const appName = "Trace";
   const totalProjects = 3;
 
-  const [bugs, setBugs] = useState([
-    { id: 1, title: "Login button not working", status: "Open" },
-    { id: 2, title: "Dashboard loading slowly", status: "In Progress" },
-    { id: 3, title: "Payment request failing", status: "Closed" }
-  ]);
+  const [bugs, setBugs] = useState([]);
 
   const [backendStatus, setBackendStatus] = useState("Not checked");
   const [isLoading, setIsLoading] = useState(false);
 
+  async function fetchBugs() {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/bugs");
+    const data = await response.json();
+
+    if(!response.ok) {
+      throw new Error(data.error);
+    }
+
+    setBugs();
+    } catch(error) {
+      console.error(error.message);
+      setBackendStatus("Backend unavailable");
+    } finally {
+      setIsLoading(false);
+    }
+}
+  
   async function checkBackend() {
     setIsLoading(true);
 
@@ -44,6 +59,7 @@ function App() {
 
   useEffect(() => {
     checkBackend();
+    fetchBugs();
   }, [])
 
   return (
