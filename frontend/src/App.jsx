@@ -5,41 +5,76 @@ function App() {
   const totalProjects = 3;
 
   const [bugs, setBugs] = useState([]);
-
   const [backendStatus, setBackendStatus] = useState("Not checked");
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [token, setToken] = useState(null);
 
-  async function fetchBugs() {
+  async function handleLogin(event) {
+    try {
+      event.preventDefault();
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
+      setToken(data.token);
+      fetchBugs(data.token);
+    } catch (error) {
+      console.error(error.message);
+    }
+  }
+
+  async function fetchBugs(myToken) {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/bugs");
-    const data = await response.json();
+      const response = await fetch("/api/bugs", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${myToken}`
+        }
+      }
+      );
+      const data = await response.json();
 
-    if(!response.ok) {
-      throw new Error(data.error);
-    }
+      if (!response.ok) {
+        throw new Error(data.error);
+      }
 
-    setBugs();
-    } catch(error) {
+      setBugs(data);
+    } catch (error) {
       console.error(error.message);
       setBackendStatus("Backend unavailable");
     } finally {
       setIsLoading(false);
     }
-}
-  
+  }
+
   async function checkBackend() {
     setIsLoading(true);
 
     try {
       const response = await fetch("/api/health");
       const data = await response.json();
-      if(!response.ok) {
+      if (!response.ok) {
         throw new Error(data.error);
       }
-      
+
       setBackendStatus(data.status);
-    } catch(error) {
+    } catch (error) {
       console.error(error.message);
       setBackendStatus("Backend unavailable");
     } finally {
@@ -57,10 +92,10 @@ function App() {
     setBugs([...bugs, newBug]);
   }
 
+
   useEffect(() => {
-    checkBackend();
-    fetchBugs();
-  }, [])
+    
+  }, []);
 
   return (
     <>
@@ -77,6 +112,23 @@ function App() {
 
       <p>Backend Status: {isLoading ? "Checking..." : backendStatus}</p>
       <button onClick={addBug}>Add bug</button><br />
+
+      <form action="" onSubmit={handleLogin}>
+        <input
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+        />
+
+        <input
+          type="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+        />
+        <button type="submit">Login</button>
+      </form>
+
+      <p>{token !== null ? "Authenticated successfully" : "Authentication failed"}</p>
     </>
   )
 }
