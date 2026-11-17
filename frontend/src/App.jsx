@@ -14,6 +14,7 @@ function App() {
   const [authError, setAuthError] = useState("");
   const [projects, setProjects] = useState([]);
   const [projectError, setProjectError] = useState("");
+  const [selectedProjectId, setSelectedProjectId] = useState("");
 
   async function handleLogin(event) {
     try {
@@ -86,6 +87,10 @@ function App() {
         throw new Error(data.message);
       }
 
+      if (data.length > 0) {
+        setSelectedProjectId(data[0].id);
+      }
+
       setProjects(data);
       setProjectError("");
     } catch (error) {
@@ -107,7 +112,7 @@ function App() {
         body: JSON.stringify({
           title: newBugTitle,
           status: "Open",
-          projectId: 1
+          projectId: Number(selectedProjectId)
         })
       });
 
@@ -201,6 +206,11 @@ function App() {
         <>
           <form action="" onSubmit={handleAddBug}>
             <input type="text" placeholder="Add new bug" value={newBugTitle} onChange={(event) => setNewBugTitle(event.target.value)} />
+            <select value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>{project.name}</option>
+              ))}
+            </select>
             <button type="submit">Add Bug</button>
           </form>
         </>
