@@ -10,6 +10,7 @@ function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [token, setToken] = useState(null);
+  const [authError, setAuthError] = useState("");
 
   async function handleLogin(event) {
     try {
@@ -31,9 +32,12 @@ function App() {
       }
 
       setToken(data.token);
+      setAuthError("");
       fetchBugs(data.token);
     } catch (error) {
       console.error(error.message);
+      setToken(null);
+      setAuthError("Auth failed. Please try again");
     }
   }
 
@@ -94,7 +98,7 @@ function App() {
 
 
   useEffect(() => {
-    
+    checkBackend();
   }, []);
 
   return (
@@ -128,7 +132,8 @@ function App() {
         <button type="submit">Login</button>
       </form>
 
-      <p>{token !== null ? "Authenticated successfully" : "Authentication failed"}</p>
+      {authError && <p>{authError}</p>}
+      {token !== null && <p>Authenticated successfully</p>}
     </>
   )
 }
