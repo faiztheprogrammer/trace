@@ -5,6 +5,7 @@ function App() {
   const totalProjects = 3;
 
   const [bugs, setBugs] = useState([]);
+  const [newBugTitle, setNewBugTitle] = useState("");
   const [backendStatus, setBackendStatus] = useState("Not checked");
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -67,6 +68,36 @@ function App() {
     }
   }
 
+  async function handleAddBug(event) {
+    try {
+      event.preventDefault();
+
+      const response = await fetch("/api/bugs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: newBugTitle,
+          status: "Open",
+          projectId: 1
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
+      setBugs([...bugs, data]);
+      setNewBugTitle("");
+    } catch (error) {
+      console.log(error.message);
+    }
+  }
+
   async function checkBackend() {
     setIsLoading(true);
 
@@ -86,17 +117,6 @@ function App() {
     }
   }
 
-  function addBug() {
-    const newBug = {
-      id: bugs.length + 1,
-      title: "API response failing",
-      status: "Open"
-    }
-
-    setBugs([...bugs, newBug]);
-  }
-
-
   useEffect(() => {
     checkBackend();
   }, []);
@@ -115,7 +135,6 @@ function App() {
       </ul>
 
       <p>Backend Status: {isLoading ? "Checking..." : backendStatus}</p>
-      <button onClick={addBug}>Add bug</button><br />
 
       <form action="" onSubmit={handleLogin}>
         <input
@@ -134,6 +153,11 @@ function App() {
 
       {authError && <p>{authError}</p>}
       {token !== null && <p>Authenticated successfully</p>}
+
+      <form action="" onSubmit={handleAddBug}>
+        <input type="text" value={newBugTitle} onChange={(event) => setNewBugTitle(event.target.value)}/>
+        <button type="submit">Add Bug</button>
+      </form>
     </>
   )
 }
