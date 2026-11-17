@@ -6,6 +6,7 @@ function App() {
 
   const [bugs, setBugs] = useState([]);
   const [newBugTitle, setNewBugTitle] = useState("");
+  const [bugError, setBugError] = useState("");
   const [backendStatus, setBackendStatus] = useState("Not checked");
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -93,8 +94,10 @@ function App() {
 
       setBugs([...bugs, data]);
       setNewBugTitle("");
+      setBugError("");
     } catch (error) {
       console.log(error.message);
+      setBugError(error.message);
     }
   }
 
@@ -127,37 +130,50 @@ function App() {
       <p>A project and bug tracking application.</p>
       <p>Total projects: <strong>{totalProjects}</strong></p>
 
-      <p>Total bugs: <strong>{bugs.length}</strong></p>
-      <ul>
-        {bugs.map((bug) => (
-          <li key={bug.id}>Title: {bug.title} ----- Status: {bug.status}</li>
-        ))}
-      </ul>
+      {token !== null && (
+        <>
+          <p>Total bugs: <strong>{bugs.length}</strong></p>
+          <ul>
+            {bugs.map((bug) => (
+              <li key={bug.id}>Title: {bug.title} ----- Status: {bug.status}</li>
+            ))}
+          </ul>
+        </>
+      )}
 
       <p>Backend Status: {isLoading ? "Checking..." : backendStatus}</p>
 
-      <form action="" onSubmit={handleLogin}>
-        <input
-          type="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-        />
+      {token === null && (
+        <>
+          <form action="" onSubmit={handleLogin}>
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
 
-        <input
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-        />
-        <button type="submit">Login</button>
-      </form>
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+            <button type="submit">Login</button>
+          </form>
+        </>
+      )}
 
       {authError && <p>{authError}</p>}
       {token !== null && <p>Authenticated successfully</p>}
 
-      <form action="" onSubmit={handleAddBug}>
-        <input type="text" value={newBugTitle} onChange={(event) => setNewBugTitle(event.target.value)}/>
-        <button type="submit">Add Bug</button>
-      </form>
+      {token !== null && (
+        <>
+          <form action="" onSubmit={handleAddBug}>
+            <input type="text" value={newBugTitle} onChange={(event) => setNewBugTitle(event.target.value)} />
+            <button type="submit">Add Bug</button>
+          </form>
+        </>
+      )}
+      {bugError && <p>{bugError}</p>}
     </>
   )
 }
