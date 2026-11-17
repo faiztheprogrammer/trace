@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 
 function App() {
   const appName = "Trace";
-  const totalProjects = 3;
 
   const [bugs, setBugs] = useState([]);
   const [newBugTitle, setNewBugTitle] = useState("");
@@ -13,6 +12,8 @@ function App() {
   const [password, setPassword] = useState("");
   const [token, setToken] = useState(null);
   const [authError, setAuthError] = useState("");
+  const [projects, setProjects] = useState([]);
+  const [projectError, setProjectError] = useState("");
 
   async function handleLogin(event) {
     try {
@@ -36,6 +37,7 @@ function App() {
       setToken(data.token);
       setAuthError("");
       fetchBugs(data.token);
+      fetchProjects(data.token);
     } catch (error) {
       console.error(error.message);
       setToken(null);
@@ -57,7 +59,7 @@ function App() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error);
+        throw new Error(data.message);
       }
 
       setBugs(data);
@@ -66,6 +68,29 @@ function App() {
       setBackendStatus("Backend unavailable");
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function fetchProjects(myToken) {
+    try {
+      const response = await fetch("/api/projects", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${myToken}`
+        }
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
+      setProjects(data);
+      setProjectError("");
+    } catch (error) {
+      console.error(error.message);
+      setProjectError(error.message);
     }
   }
 
@@ -128,16 +153,23 @@ function App() {
     <>
       <h1>{appName}</h1>
       <p>A project and bug tracking application.</p>
-      <p>Total projects: <strong>{totalProjects}</strong></p>
 
       {token !== null && (
         <>
-          <p>Total bugs: <strong>{bugs.length}</strong></p>
+          <p>Total Projects: <strong>{projects.length}</strong></p>
           <ul>
-            {bugs.map((bug) => (
-              <li key={bug.id}>Title: {bug.title} ----- Status: {bug.status}</li>
+            {projects.map((project) => (
+              <li key={project.id}>{project.name}</li>
             ))}
           </ul>
+          {projectError && <p>Error fetching projects from database</p>}
+
+          <p>Total bugs: {bugs.length}</p>
+          <ol>
+            {bugs.map((bug) => (
+              <li key={bug.id}>{bug.title}</li>
+            ))}
+          </ol>
         </>
       )}
 
@@ -168,7 +200,7 @@ function App() {
       {token !== null && (
         <>
           <form action="" onSubmit={handleAddBug}>
-            <input type="text" value={newBugTitle} onChange={(event) => setNewBugTitle(event.target.value)} />
+            <input type="text" placeholder="Add new bug" value={newBugTitle} onChange={(event) => setNewBugTitle(event.target.value)} />
             <button type="submit">Add Bug</button>
           </form>
         </>
