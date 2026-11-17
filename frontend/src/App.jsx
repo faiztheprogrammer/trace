@@ -72,6 +72,33 @@ function App() {
     }
   }
 
+  async function handleStatusChange(bugId, newStatus) {
+    try {
+      const response = await fetch(`/api/bugs/${bugId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          status: newStatus
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
+      setBugs(bugs.map((bug) => bug.id === bugId ? data : bug));
+      setBugError("")
+    } catch (error) {
+      console.error(error.message);
+      setBugError(error.message);
+    }
+  }
+
   async function fetchProjects(myToken) {
     try {
       const response = await fetch("/api/projects", {
@@ -172,7 +199,17 @@ function App() {
           <p>Total bugs: {bugs.length}</p>
           <ol>
             {bugs.map((bug) => (
-              <li key={bug.id}>{bug.title}</li>
+              <li key={bug.id}>
+                {bug.title} ({bug.project_name}){" "}
+                <select
+                  value={bug.status}
+                  onChange={(event) => handleStatusChange(bug.id, event.target.value)}
+                >
+                  <option value="Open">Open</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Closed">Closed</option>
+                </select>
+              </li>
             ))}
           </ol>
         </>
