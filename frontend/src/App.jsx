@@ -158,6 +158,37 @@ function App() {
     }
   }
 
+  async function handleDeleteBug(bugId) {
+    try {
+      const response = await fetch(`/api/bugs/${bugId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message);
+      }
+
+      setBugs(bugs.filter((bug) => bug.id !== bugId));
+      setBugError("");
+    } catch (error) {
+      console.error(error.message);
+      setBugError(error.message);
+    }
+  }
+
+  function handleLogout() {
+    setToken(null);
+    setBugs([]);
+    setProjects([]);
+    setAuthError("");
+    setBugError("");
+    setProjectError("");
+  }
+
   async function checkBackend() {
     setIsLoading(true);
 
@@ -201,6 +232,7 @@ function App() {
             {bugs.map((bug) => (
               <li key={bug.id}>
                 {bug.title} ({bug.project_name}){" "}
+
                 <select
                   value={bug.status}
                   onChange={(event) => handleStatusChange(bug.id, event.target.value)}
@@ -208,7 +240,9 @@ function App() {
                   <option value="Open">Open</option>
                   <option value="In Progress">In Progress</option>
                   <option value="Closed">Closed</option>
-                </select>
+                </select>{" "}
+
+                <button onClick={() => handleDeleteBug(bug.id)}>Delete</button>
               </li>
             ))}
           </ol>
@@ -216,7 +250,7 @@ function App() {
       )}
 
       <p>Backend Status: {isLoading ? "Checking..." : backendStatus}</p>
-
+      {token !== null && <button onClick={handleLogout}>Logout</button>}
       {token === null && (
         <>
           <form action="" onSubmit={handleLogin}>
