@@ -8,7 +8,7 @@
 .app-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 1rem;
   padding-bottom: 1rem;
   margin-bottom: 1.5rem;
@@ -16,7 +16,9 @@
 }
 
 .app-header h1 {
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.35rem;
+  font-size: 2rem;
+  line-height: 1.2;
   color: var(--text-h);
 }
 
@@ -178,4 +180,17 @@ button.danger-btn {
   color: #22c55e;
   font-size: 0.9rem;
   margin: 0.5rem 0 0;
+}
+
+.link-btn {
+  margin-top: 0.75rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.85rem;
+}
+
+.project-form {
+  margin-top: 0.9rem;
 }

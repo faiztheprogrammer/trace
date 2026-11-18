@@ -13,7 +13,10 @@ function App() {
   const [password, setPassword] = useState("");
   const [token, setToken] = useState(null);
   const [authError, setAuthError] = useState("");
+  const [authMessage, setAuthMessage] = useState("");
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [projects, setProjects] = useState([]);
+  const [newProjectName, setNewProjectName] = useState("");
   const [projectError, setProjectError] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
@@ -40,12 +43,44 @@ function App() {
 
       setToken(data.token);
       setAuthError("");
+      setAuthMessage("");
       fetchBugs(data.token);
       fetchProjects(data.token);
     } catch (error) {
       console.error(error.message);
       setToken(null);
+      setAuthMessage("");
       setAuthError("Auth failed. Please try again");
+    }
+  }
+
+  async function handleRegister(event) {
+    try {
+      event.preventDefault();
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
+      setAuthError("");
+      setAuthMessage("Account registered! Please log in.");
+      setPassword("");
+      setIsRegisterMode(false);
+    } catch (error) {
+      console.error(error.message);
+      setAuthMessage("");
+      setAuthError(error.message);
     }
   }
 
@@ -129,6 +164,37 @@ function App() {
       }
 
       setProjects(data);
+      setProjectError("");
+    } catch (error) {
+      console.error(error.message);
+      setProjectError(error.message);
+    }
+  }
+
+  async function handleAddProject(event) {
+    try {
+      event.preventDefault();
+      const response = await fetch("/api/projects", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: newProjectName
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
+      setProjects([...projects, data]);
+      if (!selectedProjectId) {
+        setSelectedProjectId(data.id);
+      }
+      setNewProjectName("");
       setProjectError("");
     } catch (error) {
       console.error(error.message);
@@ -237,8 +303,11 @@ function App() {
 
       {token === null && (
         <section className="card">
-          <h2>Login</h2>
-          <form className="form-row" onSubmit={handleLogin}>
+          <h2>{isRegisterMode ? "Register" : "Login"}</h2>
+          <form
+            className="form-row"
+            onSubmit={isRegisterMode ? handleRegister : handleLogin}
+          >
             <input
               type="email"
               placeholder="Email"
@@ -247,13 +316,27 @@ function App() {
             />
             <input
               type="password"
-              placeholder="Password"
+              placeholder="Password (min 8 chars)"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
-            <button type="submit">Login</button>
+            <button type="submit">{isRegisterMode ? "Register" : "Login"}</button>
           </form>
+          <button
+            type="button"
+            className="link-btn"
+            onClick={() => {
+              setIsRegisterMode(!isRegisterMode);
+              setAuthError("");
+              setAuthMessage("");
+            }}
+          >
+            {isRegisterMode
+              ? "Already have an account? Login"
+              : "Need an account? Register"}
+          </button>
           {authError && <p className="error-text">{authError}</p>}
+          {authMessage && <p className="success-text">{authMessage}</p>}
         </section>
       )}
 
@@ -266,6 +349,15 @@ function App() {
                 <li key={project.id} className="project-pill">{project.name}</li>
               ))}
             </ul>
+            <form className="form-row project-form" onSubmit={handleAddProject}>
+              <input
+                type="text"
+                placeholder="New project name (admin only)..."
+                value={newProjectName}
+                onChange={(event) => setNewProjectName(event.target.value)}
+              />
+              <button type="submit">Add Project</button>
+            </form>
             {projectError && <p className="error-text">{projectError}</p>}
           </section>
 
