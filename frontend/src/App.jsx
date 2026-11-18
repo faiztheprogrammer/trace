@@ -6,7 +6,7 @@ function App() {
   const [bugs, setBugs] = useState([]);
   const [newBugTitle, setNewBugTitle] = useState("");
   const [bugError, setBugError] = useState("");
-  const [backendStatus, setBackendStatus] = useState("Not checked");
+  const [backendStatus, setBackendStatus] = useState("Checking...");
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,6 +15,8 @@ function App() {
   const [projects, setProjects] = useState([]);
   const [projectError, setProjectError] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterProjectId, setFilterProjectId] = useState("");
 
   async function handleLogin(event) {
     try {
@@ -46,10 +48,17 @@ function App() {
     }
   }
 
-  async function fetchBugs(myToken) {
+  async function fetchBugs(myToken, status = "", projectId = "") {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/bugs", {
+      const params = new URLSearchParams();
+      if (status) params.append("status", status);
+      if (projectId) params.append("projectId", projectId);
+
+      const query = params.toString();
+      const url = query ? `/api/bugs?${query}` : "/api/bugs";
+
+      const response = await fetch(url, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -184,31 +193,29 @@ function App() {
     setToken(null);
     setBugs([]);
     setProjects([]);
+    setFilterStatus("");
+    setFilterProjectId("");
     setAuthError("");
     setBugError("");
     setProjectError("");
   }
 
-  async function checkBackend() {
-    setIsLoading(true);
-
-    try {
-      const response = await fetch("/api/health");
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error);
-      }
-
-      setBackendStatus(data.status);
-    } catch (error) {
-      console.error(error.message);
-      setBackendStatus("Backend unavailable");
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
   useEffect(() => {
+    async function checkBackend() {
+      try {
+        const response = await fetch("/api/health");
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error);
+        }
+
+        setBackendStatus(data.status);
+      } catch (error) {
+        console.error(error.message);
+        setBackendStatus("Backend unavailable");
+      }
+    }
+
     checkBackend();
   }, []);
 
@@ -228,6 +235,36 @@ function App() {
           {projectError && <p>Error fetching projects from database</p>}
 
           <p>Total bugs: {bugs.length}</p>
+
+          <div>
+            <select
+              value={filterStatus}
+              onChange={(event) => {
+                const nextStatus = event.target.value;
+                setFilterStatus(nextStatus);
+                fetchBugs(token, nextStatus, filterProjectId);
+              }}
+            >
+              <option value="">All Statuses</option>
+              <option value="Open">Open</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Closed">Closed</option>
+            </select>{" "}
+            <select
+              value={filterProjectId}
+              onChange={(event) => {
+                const nextProjectId = event.target.value;
+                setFilterProjectId(nextProjectId);
+                fetchBugs(token, filterStatus, nextProjectId);
+              }}
+            >
+              <option value="">All Projects</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>{project.name}</option>
+              ))}
+            </select>
+          </div>
+
           <ol>
             {bugs.map((bug) => (
               <li key={bug.id}>
